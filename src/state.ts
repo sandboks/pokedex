@@ -1,16 +1,18 @@
 import { createInterface, type Interface } from "readline";
+import { PokeAPI, ShallowLocations } from "./pokeapi.js";
 
 export type CLICommand = {
-  name: string;
-  description: string;
-  //callback: (commands: Record<string, CLICommand>) => void;
-  callback: (state: State) => void;
+    //name: string; // this is redundant, and will never be used :/
+    description: string;
+    //callback: (state: State) => void;
+    callback: (state: State) => Promise<void>;
 };
 
 //Export a new State type from this file, it should contain the readline interface and the commands registry.
 export type State = {
     commands: Record<string, CLICommand>;
     rl: Interface;
+    pokeapi: PokeAPI;
 }
 
 //Export a new function called initState. Move the logic that creates the readline interface and the commands registry into this function. It should return an initialized State object.
@@ -23,16 +25,16 @@ export function initState(): State {
             output: process.stdout,
             prompt: 'Pokedex> ',
 		}),
+        pokeapi: new PokeAPI(),
     }
 }
 
 export function getCommands(): Record<string, CLICommand> {
     return {
         help: {
-            name: "help",
             description: "lists all commands",
-            callback: (state: State) => {
-                console.log("=== USAGE: ===\n");
+            callback: async (state: State) => {
+                console.log("=== USAGE: ===");
                 for (const commandTag in state.commands) {
                     let command = state.commands[commandTag];
                     console.log(`${commandTag}: ${command.description}`);
@@ -41,14 +43,40 @@ export function getCommands(): Record<string, CLICommand> {
             }
         },
         exit: {
-            name: "exit",
             description: "Exits the pokedex",
-            callback: (state: State) => {
+            callback: async (state: State) => {
                 console.log("Closing the Pokedex... Goodbye!");
                 state.rl.close();
                 process.exit(0);
             }
         },
-        // can add more commands here
+        map: {
+            description: "Display a list of locations",
+            callback: async (state: State) => {
+                let data = await state.pokeapi.fetchLocations();
+                PrintMapData(data);
+            }
+        },
+        mapb: {
+            description: "Display a list of locations, going backwards",
+            callback: async (state: State) => {
+                if (!state.pokeapi.CanGoBack()) {
+                    console.log("You're on the first page. Can't go any further back.");
+                    return;
+                }
+                
+                let data = await state.pokeapi.fetchLocations(true);
+                PrintMapData(data);
+            }
+        },
     };
+}
+
+function PrintMapData(data: ShallowLocations) {
+    let results = data.results;
+    console.log("=== MAP DATA: ===");
+    for (let i in results) {
+        console.log(results[i].name);
+    }
+    console.log("=================");
 }
