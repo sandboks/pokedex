@@ -1,9 +1,13 @@
+import { Cache } from "./pokecache.js";
+
 export class PokeAPI {
     private static readonly baseURL = "https://pokeapi.co/api/v2";
     private static readonly numberResults = 5;
 
     private static nextLocationsURL: string = "";
     private static prevLocationsURL: string = "";
+
+    private cache = new Cache(10000);
 
     constructor() {}
 
@@ -16,12 +20,22 @@ export class PokeAPI {
         //let url = pageURL ? pageURL : `${PokeAPI.baseURL}/location/?offset=0&limit=5`;
         let url = (PokeAPI.nextLocationsURL == "") ? `${PokeAPI.baseURL}/location/?offset=0&limit=${PokeAPI.numberResults}` : (goBackwards ? PokeAPI.prevLocationsURL : PokeAPI.nextLocationsURL);
 
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
+        let result:ShallowLocations;
+        
+        let cached = this.cache.get(url);
+        if (cached != null) {
+            result = cached.val;
+        }
+        else {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            result = await response.json();
+            this.cache.add(url, result);
         }
 
-        const result: ShallowLocations = await response.json();
         //console.log(result);
         PokeAPI.nextLocationsURL = result.next;
         PokeAPI.prevLocationsURL = result.previous;
