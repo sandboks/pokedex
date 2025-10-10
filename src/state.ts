@@ -74,9 +74,9 @@ export function getCommands(): Record<string, CLICommand> {
 
 function PrintMapData(data: ShallowLocations) {
     let results = data.results;
-    console.log("=== MAP DATA: ===");
+    console.log(`=== MAP DATA: [${PokeAPI.pageNumber.toString().padStart(3, '0')}] ===`);
     for (let i in results) {
         console.log(results[i].name);
     }
-    console.log("=================");
+    console.log("=======================");
 }

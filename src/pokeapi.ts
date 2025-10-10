@@ -6,6 +6,7 @@ export class PokeAPI {
 
     private static nextLocationsURL: string = "";
     private static prevLocationsURL: string = "";
+    static pageNumber: number = 0;
 
     private cache = new Cache(10000);
 
@@ -15,11 +16,22 @@ export class PokeAPI {
         return (PokeAPI.prevLocationsURL != null) && PokeAPI.prevLocationsURL != "";
     }
 
-    async fetchLocations(goBackwards?:boolean, pageURL?: string): Promise<ShallowLocations> {
-        //https://pokeapi.co/api/v2/location-area/?offset=0&limit=5
-        //let url = pageURL ? pageURL : `${PokeAPI.baseURL}/location/?offset=0&limit=5`;
-        let url = (PokeAPI.nextLocationsURL == "") ? `${PokeAPI.baseURL}/location/?offset=0&limit=${PokeAPI.numberResults}` : (goBackwards ? PokeAPI.prevLocationsURL : PokeAPI.nextLocationsURL);
+    async fetchLocations(goBackwards:boolean = false) {
+        let url = this.generateUrl(goBackwards);
+        PokeAPI.pageNumber += (goBackwards ? -1 : 1);
+        
+        return await this.fetchLocationsInternal(url);
+    }
 
+    generateUrl(goBackwards:boolean = false): string {
+        let url = (goBackwards ? PokeAPI.prevLocationsURL : PokeAPI.nextLocationsURL);
+        if (PokeAPI.nextLocationsURL == "") {
+            url = `${PokeAPI.baseURL}/location/?offset=0&limit=${PokeAPI.numberResults}`;
+        }
+        return url;
+    }
+
+    async fetchLocationsInternal(url: string): Promise<ShallowLocations> {
         let result:ShallowLocations;
         
         let cached = this.cache.get(url);
@@ -39,8 +51,8 @@ export class PokeAPI {
         //console.log(result);
         PokeAPI.nextLocationsURL = result.next;
         PokeAPI.prevLocationsURL = result.previous;
-        console.log(PokeAPI.nextLocationsURL);
-        console.log(PokeAPI.prevLocationsURL);
+        //console.log(PokeAPI.nextLocationsURL);
+        //console.log(PokeAPI.prevLocationsURL);
         
         return result;
     }

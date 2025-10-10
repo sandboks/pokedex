@@ -1,14 +1,10 @@
-import { getCommands, initState } from "./state.js";
+import { initState } from "./state.js";
 import type { State } from "./state.js";
-
-
 
 export function cleanInput(input: string): string[] {
     input = input.trim().toLowerCase();
     return input.split(/\s+/);
 }
-
-
 
 export async function startREPL() {
     let state: State = initState();
