@@ -13,10 +13,10 @@ export async function startREPL() {
     state.rl.prompt();
     state.rl.on('line', async (line: string) => {
         let cleanedInput = cleanInput(line);
-        let input = cleanedInput[0];
+        let input = cleanedInput;
         
-        if (input in state.commands) {
-            await state.commands[input].callback(state);
+        if (input[0] in state.commands) {
+            await state.commands[input[0]].callback(state, ...input.slice(1));
         }
         else {
             console.log("Not found");

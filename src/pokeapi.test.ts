@@ -2,7 +2,7 @@
 import { describe, expect, test } from "vitest";
 //import { initState } from "./state.js";
 //import type { State } from "./state.js";
-import { PokeAPI, ShallowLocations } from "./pokeapi.js";
+import { PokeAPI, LocationData } from "./pokeapi.js";
 
 describe("PokeAPI / cache testing", () => {
     describe("test nothing", () => {
@@ -23,7 +23,7 @@ describe("PokeAPI / cache testing", () => {
     });
 
     test("offline hardcoded data", async () => {
-        let data:ShallowLocations = {"count":1070,"next":"https://pokeapi.co/api/v2/location/?offset=5&limit=5","previous":null,"results":[{"name":"canalave-city","url":"https://pokeapi.co/api/v2/location/1/"},{"name":"eterna-city","url":"https://pokeapi.co/api/v2/location/2/"},{"name":"pastoria-city","url":"https://pokeapi.co/api/v2/location/3/"},{"name":"sunyshore-city","url":"https://pokeapi.co/api/v2/location/4/"},{"name":"sinnoh-pokemon-league","url":"https://pokeapi.co/api/v2/location/5/"}]};
+        let data:LocationData = {"count":1070,"next":"https://pokeapi.co/api/v2/location/?offset=5&limit=5","previous":null,"results":[{"name":"canalave-city","url":"https://pokeapi.co/api/v2/location/1/"},{"name":"eterna-city","url":"https://pokeapi.co/api/v2/location/2/"},{"name":"pastoria-city","url":"https://pokeapi.co/api/v2/location/3/"},{"name":"sunyshore-city","url":"https://pokeapi.co/api/v2/location/4/"},{"name":"sinnoh-pokemon-league","url":"https://pokeapi.co/api/v2/location/5/"}]};
         pokeAPI.QueueJsonData(data);
         pokeAPI.fetchLocations();
 
@@ -72,12 +72,3 @@ describe("PokeAPI / online network functionality", () => {
         expect(pokeAPI.pageNumber).toBe(1);
     });
 })
-
-/*
-test.concurrent.each(
-    [
-        {}
-    ], () => {
-
-});
-*/

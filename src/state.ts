@@ -1,11 +1,12 @@
 import { createInterface, type Interface } from "readline";
-import { PokeAPI, ShallowLocations } from "./pokeapi.js";
+import { PokeAPI, LocationData, LocationEncounters } from "./pokeapi.js";
 
 export type CLICommand = {
     //name: string; // this is redundant, and will never be used :/
     description: string;
     //callback: (state: State) => void;
-    callback: (state: State) => Promise<void>;
+    //callback: (state: State) => Promise<void>;
+    callback: (state: State, ...args: string[]) => Promise<void>;
 };
 
 //Export a new State type from this file, it should contain the readline interface and the commands registry.
@@ -69,10 +70,29 @@ export function getCommands(): Record<string, CLICommand> {
                 PrintMapData(data, state.pokeapi.pageNumber);
             }
         },
+        explore: {
+            description: "Explore an area, given as the 2nd argument",
+            callback: async (state: State, ...args: string[]) => {
+                //console.log(args);
+                // for now, assuming we always call the first entry in our map list (array index 0)
+                let locationName:string = "pastoria-city-area"; //state.pokeapi.GetLocationStringAtIndex(0);
+                if (args[0] != undefined)
+                    locationName = args[0];
+
+                console.log(`Exploring ${locationName}...`);
+                let encounters:LocationEncounters = await state.pokeapi.GetEncountersFromLocationName(locationName);
+                //console.log(encounters);
+                let i:number = 0;
+                for (const encounter of encounters.pokemon_encounters){
+                    console.log(`[${i.toString().padStart(1 + ((encounters.pokemon_encounters.length-1)/10), ' ')}] - ${encounter.pokemon.name}`);
+                    i++;
+                }
+            }
+        }
     };
 }
 
-function PrintMapData(data: ShallowLocations, pageNumber: number) {
+function PrintMapData(data: LocationData, pageNumber: number) {
     let results = data.results;
     console.log(`=== MAP DATA: [${pageNumber.toString().padStart(3, '0')}] ===`);
     for (let i in results) {
