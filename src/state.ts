@@ -54,7 +54,7 @@ export function getCommands(): Record<string, CLICommand> {
             description: "Display a list of locations",
             callback: async (state: State) => {
                 let data = await state.pokeapi.fetchLocations();
-                PrintMapData(data);
+                PrintMapData(data, state.pokeapi.pageNumber);
             }
         },
         mapb: {
@@ -66,15 +66,15 @@ export function getCommands(): Record<string, CLICommand> {
                 }
                 
                 let data = await state.pokeapi.fetchLocations(true);
-                PrintMapData(data);
+                PrintMapData(data, state.pokeapi.pageNumber);
             }
         },
     };
 }
 
-function PrintMapData(data: ShallowLocations) {
+function PrintMapData(data: ShallowLocations, pageNumber: number) {
     let results = data.results;
-    console.log(`=== MAP DATA: [${PokeAPI.pageNumber.toString().padStart(3, '0')}] ===`);
+    console.log(`=== MAP DATA: [${pageNumber.toString().padStart(3, '0')}] ===`);
     for (let i in results) {
         console.log(results[i].name);
     }
