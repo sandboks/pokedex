@@ -2,9 +2,9 @@
 import { describe, expect, test } from "vitest";
 //import { initState } from "./state.js";
 //import type { State } from "./state.js";
-import { PokeAPI, LocationData } from "./pokeapi.js";
+import { PokeAPI, LocationData, LocationEncounters } from "./pokeapi.js";
 
-describe("PokeAPI / cache testing", () => {
+describe("PokeAPI / location / cache testing", () => {
     describe("test nothing", () => {
         test("test nothing", () => {
             expect(Math.sqrt(4)).toBe(2)
@@ -45,6 +45,22 @@ describe("PokeAPI / cache testing", () => {
         expect(pokeAPI.pageNumber).toBe(1);
     })
 
+})
+
+describe("PokeAPI / encounters ", () => {
+    let pokeAPI = new PokeAPI();
+    
+    test("load encounters", async () => {
+        let locationName:string = "pastoria-city-area";
+        let encounters:LocationEncounters = await pokeAPI.GetEncountersFromLocationName(locationName);
+
+        // assertions
+        expect(encounters.pokemon_encounters.length).toBe(10);
+
+        locationName = "valley-windworks-area";
+        encounters = await pokeAPI.GetEncountersFromLocationName(locationName);
+        expect(encounters.pokemon_encounters.length).toBe(19);
+    });
 })
 
 describe("PokeAPI / online network functionality", () => {
