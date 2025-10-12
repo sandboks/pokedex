@@ -28,7 +28,7 @@ A Command Line Interface that uses PokeAPI (https://pokeapi.co/) to fetch and di
     ```
 
 ## Example usage:
-   ```bash
+   ```
     Welcome to the Pokedex! Enter a command
     Pokedex> catch pikachu
     Throwing ball at pikachu...
@@ -61,4 +61,3 @@ A Command Line Interface that uses PokeAPI (https://pokeapi.co/) to fetch and di
     ==============================
     Pokedex> exit
     Closing the Pokedex... Goodbye!
-    ```
