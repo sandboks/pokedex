@@ -99,9 +99,10 @@ export class PokeAPI {
         if (speciesData == null)
             return false;
         let catchRate = speciesData.capture_rate;
-        console.log(catchRate);
+        //console.log(catchRate);
         let random = Math.floor(Math.random() * (255 + 1));
-        console.log(random);
+        //console.log(random);
+        console.log(`Catch rate: ${catchRate.toString().padStart(3, ' ')} | You rolled: ${random.toString().padStart(3, ' ')}`);
         let caughtSuccessfully:boolean = (random < catchRate);
         if (caughtSuccessfully) {
             this.pokedex.add(data.name, data);

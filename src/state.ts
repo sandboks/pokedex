@@ -89,7 +89,7 @@ export function getCommands(): Record<string, CLICommand> {
 
                 let encounters:LocationEncounters | null = await state.pokeapi.GetEncountersFromLocationName(locationName);
                 if (encounters == null) {
-                    console.log(`ERROR: ${locationName} not found`);
+                    console.log(`ERROR: Location "${locationName}" not found`);
                     return;
                 }
                 console.log(`Exploring ${locationName}...`);
@@ -114,39 +114,27 @@ export function getCommands(): Record<string, CLICommand> {
                 
                 let data:PokemonData | null = await state.pokeapi.GetPokemonDataFromNetwork(pokemonName);
                 if (data == null) {
-                    console.log(`ERROR: ${pokemonName} not found`);
+                    console.log(`ERROR: Pokemon "${pokemonName}" not found`);
                     return;
                 }
                 console.log(`Throwing ball at ${pokemonName}...`);
 
                 let successfulCatch:boolean = await state.pokeapi.RollForCapture(data);
-                if (successfulCatch) {
-                    console.log();
-                }
                 console.log(successfulCatch ? `Successfully captured ${pokemonName}!` : `${pokemonName} got away...`);
             }
         },
-        /*
-        Pokedex > inspect pidgey
-you have not caught that pokemon
-Pokedex > catch pidgey
-Throwing a Pokeball at pidgey...
-pidgey was caught!
-Pokedex > inspect pidgey
-Name: pidgey
-Height: 3
-Weight: 18
-Stats:
-  -hp: 40
-  -attack: 45
-  -defense: 40
-  -special-attack: 35
-  -special-defense: 35
-  -speed: 56
-Types:
-  - normal
-  - flying
-  */
+        pokedex: {
+            description: "List all Pokemon caught and added to the Pokedex",
+            callback: async (state: State) => {
+                //console.log(state.pokeapi.pokedex.GetAllKeys());
+                let PokedexEntries = state.pokeapi.pokedex.GetAllKeys();
+                console.log(`=== POKEDEX ENTRIES: [${PokedexEntries.length.toString().padStart(3, '0')}] ===`);
+                for (let i = 0; i < PokedexEntries.length; i++) {
+                    console.log(`- ${PokedexEntries[i]}`);
+                }
+                console.log("==============================");
+            }
+        },
         inspect: {
             description: "Check data of a caught Pokemon, given as the 2nd argument",
             callback: async (state: State, ...args: string[]) => {

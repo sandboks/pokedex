@@ -38,15 +38,19 @@ export class Cache {
         return this.#cache.get(key);
     }
 
+    GetAllKeys(): string[] {
+        //return this.#cache.keys;
+        return Array.from(this.#cache.keys());
+        //return [];
+    }
+
     #reap(): void {
 		for (let [key, value] of this.#cache) {
         //for (let [key, value] of this.#cache) {
             if (Date.now() - value.createdAt > this.#interval) {
                 this.#cache.delete(key);
-                console.log("DELET");
+                //console.log("DELET");
             }
-            //console.log(this.#cache.entries());
-            //console.log(key + " / " + value);
         }
     }
 
