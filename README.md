@@ -27,7 +27,7 @@ A Command Line Interface that uses PokeAPI (https://pokeapi.co/) to fetch and di
     npm run dev
     ```
 
-Example usage:
+## Example usage:
     ```bash
     Welcome to the Pokedex! Enter a command
     Pokedex> catch pikachu
