@@ -20,9 +20,10 @@ export class Cache {
     #reapIntervalId: NodeJS.Timeout | undefined = undefined;
     #interval: number; //ms
 
-    constructor(n:number) {
+    constructor(n:number = -1) {
         this.#interval = n;
-        this.#startReapLoop();
+        if (n != -1)
+            this.#startReapLoop();
     }
 
     add<T>(key:string, val:T) {

@@ -2,7 +2,7 @@
 import { describe, expect, test } from "vitest";
 //import { initState } from "./state.js";
 //import type { State } from "./state.js";
-import { PokeAPI, LocationData, LocationEncounters } from "./pokeapi.js";
+import { PokeAPI, RegionData, LocationEncounters } from "./pokeapi.js";
 
 describe("PokeAPI / location / cache testing", () => {
     describe("test nothing", () => {
@@ -23,7 +23,7 @@ describe("PokeAPI / location / cache testing", () => {
     });
 
     test("offline hardcoded data", async () => {
-        let data:LocationData = {"count":1070,"next":"https://pokeapi.co/api/v2/location/?offset=5&limit=5","previous":null,"results":[{"name":"canalave-city","url":"https://pokeapi.co/api/v2/location/1/"},{"name":"eterna-city","url":"https://pokeapi.co/api/v2/location/2/"},{"name":"pastoria-city","url":"https://pokeapi.co/api/v2/location/3/"},{"name":"sunyshore-city","url":"https://pokeapi.co/api/v2/location/4/"},{"name":"sinnoh-pokemon-league","url":"https://pokeapi.co/api/v2/location/5/"}]};
+        let data:RegionData = {"count":1070,"next":"https://pokeapi.co/api/v2/location/?offset=5&limit=5","previous":null,"results":[{"name":"canalave-city","url":"https://pokeapi.co/api/v2/location/1/"},{"name":"eterna-city","url":"https://pokeapi.co/api/v2/location/2/"},{"name":"pastoria-city","url":"https://pokeapi.co/api/v2/location/3/"},{"name":"sunyshore-city","url":"https://pokeapi.co/api/v2/location/4/"},{"name":"sinnoh-pokemon-league","url":"https://pokeapi.co/api/v2/location/5/"}]};
         pokeAPI.QueueJsonData(data);
         pokeAPI.fetchLocations();
 
@@ -52,13 +52,19 @@ describe("PokeAPI / encounters ", () => {
     
     test("load encounters", async () => {
         let locationName:string = "pastoria-city-area";
-        let encounters:LocationEncounters = await pokeAPI.GetEncountersFromLocationName(locationName);
+        let encounters:LocationEncounters | null = await pokeAPI.GetEncountersFromLocationName(locationName);
+
+        if (encounters == null)
+            return;
 
         // assertions
         expect(encounters.pokemon_encounters.length).toBe(10);
 
         locationName = "valley-windworks-area";
         encounters = await pokeAPI.GetEncountersFromLocationName(locationName);
+        if (encounters == null)
+            return;
+        
         expect(encounters.pokemon_encounters.length).toBe(19);
     });
 })

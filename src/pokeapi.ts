@@ -11,6 +11,8 @@ export class PokeAPI {
 
     private cache = new Cache(10000);
     private queuedData?: any;
+    pokedex = new Cache();
+
 
     constructor() {}
 
@@ -28,7 +30,7 @@ export class PokeAPI {
         let url = this.generateUrl(goBackwards);
         this.pageNumber += (goBackwards ? -1 : 1);
         
-        return await this.fetchLocationsInternal(url);
+        return await this.fetchRegionsInternal(url);
     }
 
     generateUrl(goBackwards:boolean = false): string {
@@ -39,32 +41,20 @@ export class PokeAPI {
         return url;
     }
 
-    private async fetchLocationsInternal(url: string): Promise<LocationData> {
-        let result:LocationData;
-        
+    async FetchDataFromURL<T>(url: string): Promise<T | null> {
         let cached = this.cache.get(url);
         if (cached != null) {
-            result = cached.val;
+            return cached.val as T;
         }
-        else {
-            result = await this.GetLocationDataFromUrl(url);
+
+        const result = await this.GetDataFromNetwork<T>(url);
+        if (result !== null) {
             this.cache.add(url, result);
         }
-
-        PokeAPI.nextLocationsURL = result.next;
-        PokeAPI.prevLocationsURL = result.previous;
-        this.currentURL = url;
-        //console.log(PokeAPI.nextLocationsURL);
-        //console.log(PokeAPI.prevLocationsURL);
-        
-        return result;
+        return result; // may be null
     }
 
-    async GetLocationDataFromUrl(url: string): Promise<LocationData> {
-        return this.GetDataFromUrl<LocationData>(url);
-    }
-
-    async GetDataFromUrl<T>(url: string): Promise<T> {
+    async GetDataFromNetwork<T>(url: string): Promise<T | null> { //T | null
         if (this.queuedData != null) {
             let data: T = this.queuedData;
             this.queuedData = undefined;
@@ -73,11 +63,54 @@ export class PokeAPI {
         
         const response = await fetch(url);
             if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
+                //throw new Error(`Response status: ${response.status}`);
+                return null;
             }
 
         let result:T = await response.json();
         return result;
+    }
+
+    private async fetchRegionsInternal(url: string): Promise<RegionData | null> {
+        let result = await this.FetchDataFromURL<RegionData>(url);
+        if (result == null)
+            return null;
+        
+        PokeAPI.nextLocationsURL = result.next;
+        PokeAPI.prevLocationsURL = result.previous;
+        this.currentURL = url;
+
+        return result;
+    }
+
+    async GetEncountersFromLocationName(locationName: string): Promise<LocationEncounters | null> {
+        let url:string = PokeAPI.baseURL + `/location-area/` + locationName;
+        return await this.FetchDataFromURL<LocationEncounters>(url);
+    }
+
+    async GetPokemonDataFromNetwork(pokemonName: string): Promise<PokemonData | null> {
+        //https://pokeapi.co/api/v2/pokemon/pikachu
+        let url:string = PokeAPI.baseURL + `/pokemon/` + pokemonName;
+        return await this.FetchDataFromURL<PokemonData>(url);
+    }
+
+    async RollForCapture(data: PokemonData): Promise<boolean> {
+        let speciesData = await this.FetchDataFromURL<PokemonSpeciesData>(data.species.url);
+        if (speciesData == null)
+            return false;
+        let catchRate = speciesData.capture_rate;
+        console.log(catchRate);
+        let random = Math.floor(Math.random() * (255 + 1));
+        console.log(random);
+        let caughtSuccessfully:boolean = (random < catchRate);
+        if (caughtSuccessfully) {
+            this.pokedex.add(data.name, data);
+        }
+        return caughtSuccessfully;
+    }
+
+    async GetLocationDataFromUrl(url: string): Promise<RegionData | null> {
+        return this.GetDataFromNetwork<RegionData>(url);
     }
 
     QueueJsonData(data: any) {
@@ -87,7 +120,7 @@ export class PokeAPI {
     GetLocationStringAtIndex(n: number): string {
         let cached = this.cache.get(this.currentURL);
         if (cached != null) {
-            let data:LocationData = cached.val;
+            let data:RegionData = cached.val;
             //console.log("ERROR: Location not found");
             return data.results[n].name;
         }
@@ -96,28 +129,10 @@ export class PokeAPI {
         }
         //let data:ShallowLocations = cached.val;
     }
-
-    async GetEncountersFromLocationName(locationName: string): Promise<LocationEncounters> {
-        let result:LocationEncounters;
-
-        //https://pokeapi.co/api/v2/location-area/canalave-city-area/
-        let url:string = PokeAPI.baseURL + `/location-area/` + locationName;
-        console.log(url);
-        
-        let cached = this.cache.get(url);
-        if (cached != null) {
-            result = cached.val;
-        }
-        else {
-            result = await this.GetDataFromUrl<LocationEncounters>(url);
-            this.cache.add(url, result);
-        }
-
-        return result;
-    }
 }
 
-export type LocationData = {
+// RegionData: a broader "region" that contains several "location"s. Each "location" has "encounters".
+export type RegionData = { // = null |
     count: number,
     next: string,
     previous: any,
@@ -179,3 +194,79 @@ export type LocationEncounters = {
         }[]
     }[]
 };
+
+export type PokemonData = {
+    abilities: {
+        ability: {
+            name: string
+            url: string
+        }
+        is_hidden: boolean
+        slot: number
+    }[]
+    base_experience: number
+    //cries: Cries
+    //forms: Form[]
+    //game_indices: Index[]
+    height: number
+    //held_items: HeldItem[]
+    id: number
+    is_default: boolean
+    location_area_encounters: string
+    //moves: Mfe[]
+    name: string
+    order: number
+    //past_abilities: PastAbility[]
+    past_types: any[]
+    species: {
+        name: string
+        url: string
+    }
+    //sprites: Sprites
+    stats: {
+        base_stat: number
+        effort: number
+        stat: {
+            name: string
+            url: string
+        }
+    }[]
+    types: {
+        slot: number
+        type: {
+            name: string
+            url: string
+        }
+    }[]
+    weight: number
+};
+
+type PokemonSpeciesData = {
+    base_happiness: number
+    capture_rate: number
+    //color: Color
+    //egg_groups: EggGroup[]
+    //evolution_chain: EvolutionChain
+    //evolves_from_species: EvolvesFromSpecies
+    //flavor_text_entries: FlavorTextEntry[]
+    form_descriptions: any[]
+    forms_switchable: boolean
+    gender_rate: number
+    //genera: Genera[]
+    //generation: Generation
+    //growth_rate: GrowthRate
+    //habitat: Habitat
+    has_gender_differences: boolean
+    hatch_counter: number
+    id: number
+    is_baby: boolean
+    is_legendary: boolean
+    is_mythical: boolean
+    name: string
+    //names: Name[]
+    order: number
+    //pal_park_encounters: PalParkEncounter[]
+    //pokedex_numbers: PokedexNumber[]
+    //shape: Shape
+    //varieties: Variety[]
+}

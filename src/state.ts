@@ -1,5 +1,5 @@
 import { createInterface, type Interface } from "readline";
-import { PokeAPI, LocationData, LocationEncounters } from "./pokeapi.js";
+import { PokeAPI, RegionData, LocationEncounters, PokemonData } from "./pokeapi.js";
 
 export type CLICommand = {
     //name: string; // this is redundant, and will never be used :/
@@ -55,6 +55,10 @@ export function getCommands(): Record<string, CLICommand> {
             description: "Display a list of locations",
             callback: async (state: State) => {
                 let data = await state.pokeapi.fetchLocations();
+                if (data == null) {
+                    console.log("ERROR: unable to fetch data");
+                    return;
+                }
                 PrintMapData(data, state.pokeapi.pageNumber);
             }
         },
@@ -66,7 +70,11 @@ export function getCommands(): Record<string, CLICommand> {
                     return;
                 }
                 
-                let data = await state.pokeapi.fetchLocations(true);
+                let data: RegionData | null = await state.pokeapi.fetchLocations(true);
+                if (data == null) {
+                    console.log("ERROR: unable to fetch data");
+                    return;
+                }
                 PrintMapData(data, state.pokeapi.pageNumber);
             }
         },
@@ -79,8 +87,12 @@ export function getCommands(): Record<string, CLICommand> {
                 if (args[0] != undefined)
                     locationName = args[0];
 
+                let encounters:LocationEncounters | null = await state.pokeapi.GetEncountersFromLocationName(locationName);
+                if (encounters == null) {
+                    console.log(`ERROR: ${locationName} not found`);
+                    return;
+                }
                 console.log(`Exploring ${locationName}...`);
-                let encounters:LocationEncounters = await state.pokeapi.GetEncountersFromLocationName(locationName);
                 //console.log(encounters);
                 let i:number = 0;
                 for (const encounter of encounters.pokemon_encounters){
@@ -88,11 +100,88 @@ export function getCommands(): Record<string, CLICommand> {
                     i++;
                 }
             }
-        }
+        },
+        catch: {
+            description: "Catch a Pokemon, given as the 2nd argument",
+            callback: async (state: State, ...args: string[]) => {
+                let pokemonName:string = "pikachu";
+                if (args[0] != undefined)
+                    pokemonName = args[0];
+                if (state.pokeapi.pokedex.get(pokemonName) != null) {
+                    console.log(`Already caught ${pokemonName}...`)
+                    return;
+                }
+                
+                let data:PokemonData | null = await state.pokeapi.GetPokemonDataFromNetwork(pokemonName);
+                if (data == null) {
+                    console.log(`ERROR: ${pokemonName} not found`);
+                    return;
+                }
+                console.log(`Throwing ball at ${pokemonName}...`);
+
+                let successfulCatch:boolean = await state.pokeapi.RollForCapture(data);
+                if (successfulCatch) {
+                    console.log();
+                }
+                console.log(successfulCatch ? `Successfully captured ${pokemonName}!` : `${pokemonName} got away...`);
+            }
+        },
+        /*
+        Pokedex > inspect pidgey
+you have not caught that pokemon
+Pokedex > catch pidgey
+Throwing a Pokeball at pidgey...
+pidgey was caught!
+Pokedex > inspect pidgey
+Name: pidgey
+Height: 3
+Weight: 18
+Stats:
+  -hp: 40
+  -attack: 45
+  -defense: 40
+  -special-attack: 35
+  -special-defense: 35
+  -speed: 56
+Types:
+  - normal
+  - flying
+  */
+        inspect: {
+            description: "Check data of a caught Pokemon, given as the 2nd argument",
+            callback: async (state: State, ...args: string[]) => {
+                if (args.length == 0) {
+                    console.log("ERROR: no pokemon name provided");
+                    return;
+                }
+                let p:string = args[0];
+                let data = state.pokeapi.pokedex.get(p);
+                if (data == null) {
+                    console.log(`You haven't caught a ${p} yet!`);
+                }
+                else {
+                    let pokemon:PokemonData = state.pokeapi.pokedex.get(p)?.val;
+                    
+                    let statsLine:string[] = [];
+                    for (let i = 0; i < pokemon.stats.length; i++) {
+                       statsLine.push(`-- ${pokemon.stats[i].stat.name}: ${pokemon.stats[i].base_stat}`);
+                    }
+                    let printouts:string[] = [
+                        `Name: ${p}`,
+                        `Type: [${pokemon.types[0].type.name}] ${pokemon.types.length == 1 ? "" : `/ [${pokemon.types[1].type.name}]`}`,
+                        `Height: ${(pokemon.height * 0.1).toFixed(1)}m`,
+                        `Weight: ${(pokemon.weight * 0.1).toFixed(1)}kg`,
+                        `BST:`,
+                        `${statsLine.join(`\n`)}`,
+                    ];
+                    console.log(printouts.join(`\n`));
+                }
+            }
+        },
     };
 }
 
-function PrintMapData(data: LocationData, pageNumber: number) {
+function PrintMapData(data: RegionData, pageNumber: number) {
     let results = data.results;
     console.log(`=== MAP DATA: [${pageNumber.toString().padStart(3, '0')}] ===`);
     for (let i in results) {
